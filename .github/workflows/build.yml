@@ -30,12 +30,13 @@ jobs:
       - name: Read version
         id: v
         run: echo "version=$(tr -d '[:space:]' < version.txt)" >> "$GITHUB_OUTPUT"
-      - name: Write signing key
+      - name: Unlock signing key
         env:
-          SIGNING_KEYSTORE_B64: ${{ secrets.SIGNING_KEYSTORE_B64 }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
         run: |
-          if [ -z "$SIGNING_KEYSTORE_B64" ]; then echo "Missing SIGNING_KEYSTORE_B64 secret"; exit 1; fi
-          echo "$SIGNING_KEYSTORE_B64" | base64 -d > app/release.keystore
+          if [ -z "$SIGNING_PASSWORD" ]; then echo "Missing SIGNING_PASSWORD secret"; exit 1; fi
+          printf %s "$SIGNING_PASSWORD" | openssl enc -d -aes-256-cbc -pbkdf2 -iter 300000 -in app/release.keystore.enc -out app/release.keystore -pass stdin \
+            || { echo "SIGNING_PASSWORD is wrong: it does not unlock the signing key"; exit 1; }
       - name: Build
         env:
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
