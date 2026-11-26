@@ -500,6 +500,8 @@ let favs = store.get('favs') || [];
 let favRemind = !!store.get('favRemind');
 let reminders = {};
 try { reminders = JSON.parse(window.Native ? Native.getReminders() : (localStorage.getItem('rem') || '{}')) || {}; } catch {}
+// Games stay on (and watchable) 20 minutes past their guide end time, for extra time and overruns
+const over = e => e.e + 20 * 60e3;
 const evId = e => `${e.sport}|${e.title}|${e.s}`.slice(0, 180);
 const isFav = e => favs.some(f => (e.title + ' ' + e.comp).toLowerCase().includes(f.toLowerCase()));
 const state = Object.assign({ day: 0, sport: 'all', q: '', live: true, intl: false }, store.get('view') || {}, { q: '', day: 0 });
@@ -526,7 +528,7 @@ function dayEvents() {
 function visible() {
   const q = state.q.trim().toLowerCase();
   const now = Date.now();
-  return dayEvents().filter(e => e.e > now &&
+  return dayEvents().filter(e => over(e) > now &&
     (state.sport === 'all' || (state.sport === 'fav' ? isFav(e) : e.sport === state.sport)) &&
     (!q || (e.q || (e.title + ' ' + e.comp + ' ' + e.channels.join(' ')).toLowerCase()).includes(q)));
 }
@@ -579,12 +581,12 @@ function renderInner() {
     return;
   }
   const list = visible();
-  const onNow = list.filter(e => e.s <= now && e.e > now).length;
+  const onNow = list.filter(e => e.s <= now && over(e) > now).length;
   $('#sum').textContent = list.length ? `${list.length} ${state.live ? 'live game' : 'listing'}${list.length > 1 ? 's' : ''}${onNow ? ` · ${onNow} on now` : ''}` : '';
   const limit = TV && !showAll ? 60 : Infinity;
   const extra = list.length - Math.min(list.length, limit);
   $('#list').innerHTML = list.length ? list.slice(0, limit).map(e => {
-    const live = e.s <= now && e.e > now, done = e.e <= now;
+    const live = e.s <= now && over(e) > now, done = over(e) <= now;
     const id = evId(e), rem = !!reminders[id];
     return `<li class="ev${done ? ' done' : ''}" data-id="${esc(id)}"${TV ? ' tabindex="0"' : ''}>${done || live ? '' : `<button class="bell${rem ? ' on' : ''}" data-id="${esc(id)}" aria-label="${rem ? 'Cancel reminder' : 'Remind me'}" aria-pressed="${rem}">${rem ? '🔔' : '🔕'}</button>`}
       <div class="t">${e.hs || hhmm(new Date(e.s))}<small>${done ? 'Finished' : 'to ' + (e.he || hhmm(new Date(e.e)))}</small></div>
@@ -618,7 +620,7 @@ function removeReminder(id) {
 }
 function afterRefresh() {
   const now = Date.now();
-  const upcoming = shownEvents().filter(e => e.live && !e.intl && e.e > now).slice(0, 12)
+  const upcoming = shownEvents().filter(e => e.live && !e.intl && over(e) > now).slice(0, 12)
     .map(e => ({ s: e.s, e: e.e, title: e.title, ch: e.channels[0] || '' }));
   if (window.Native) Native.saveWidget(JSON.stringify(upcoming));
   if (favRemind && favs.length) {
@@ -863,7 +865,7 @@ function closeActions() {
 }
 function openActions(ev) {
   actRow = evId(ev);
-  const now = Date.now(), done = ev.e <= now, id = evId(ev);
+  const now = Date.now(), done = over(ev) <= now, id = evId(ev);
   const acts = [];
   if (!done) for (const st of ev.streams || []) acts.push([`▶ Watch on ${st.n}`, () => play(st, ev.title)]);
   if (!done && canCatchUp(ev, now)) for (const st of ev.streams.filter(x => x.a > 0)) acts.push([`⏮ From start on ${st.n}`, () => playCatchUp(st, ev)]);
@@ -1019,7 +1021,7 @@ document.addEventListener('touchend', () => {
 if (window.Native && Native.isTv && Native.isTv()) document.body.classList.add('tv');
 $('#copy').addEventListener('click', () => {
   const now = Date.now();
-  const list = visible().filter(e => e.e > now);
+  const list = visible().filter(e => over(e) > now);
   const head = `${dayWord(state.day)}'s ${state.sport === 'all' ? 'sport' : sportName(state.sport)} — ${niceDate(state.day, { weekday: 'short', day: 'numeric', month: 'short' })}`;
   const line = e => `${e.s <= now ? 'NOW  ' : hhmm(new Date(e.s)) + ' '} ${e.title} — ${e.channels.slice(0, 3).join(' / ')}`;
   let bodyText;
@@ -1067,7 +1069,7 @@ let lastTickSig = '';
 setInterval(() => {
   if ($('#mainView').hidden) return;
   const now = Date.now();
-  const sig = visible().map(e => (e.e <= now ? 'd' : e.s <= now ? 'l' : 'u')).join('') + '|' + new Date().getMinutes();
+  const sig = visible().map(e => (over(e) <= now ? 'd' : e.s <= now ? 'l' : 'u')).join('') + '|' + new Date().getMinutes();
   // On TV, only redraw when a game starts or finishes; phones also refresh the time-based labels.
   const changed = sig.split('|')[0] !== lastTickSig.split('|')[0];
   lastTickSig = sig;
