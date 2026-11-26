@@ -65,7 +65,7 @@ public class MainActivity extends Activity {
 
         web = new WebView(this);
         // Dark while loading, so there is no white flash (and none if the page reloads).
-        web.setBackgroundColor(Color.parseColor("#0C1310"));
+        web.setBackgroundColor(Color.parseColor("#0E1124"));
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
@@ -413,7 +413,7 @@ public class MainActivity extends Activity {
         public void copy(String text) {
             runOnUiThread(() -> {
                 ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-                if (cm != null) cm.setPrimaryClip(ClipData.newPlainText("Prox Primo Pitchside", text));
+                if (cm != null) cm.setPrimaryClip(ClipData.newPlainText("PRIMO Pitchside", text));
             });
         }
     }

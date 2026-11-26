@@ -11,7 +11,7 @@
         android:id="@+id/widget_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Prox Primo · next up"
+        android:text="PRIMO · next up"
         android:textColor="#3FBF75"
         android:textSize="13sp"
         android:textStyle="bold" />
@@ -22,7 +22,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
         android:lineSpacingExtra="3dp"
-        android:text="Open Prox Primo Pitchside to load listings"
+        android:text="Open PRIMO Pitchside to load listings"
         android:textColor="#EEF3EF"
         android:textSize="13sp" />
 </LinearLayout>

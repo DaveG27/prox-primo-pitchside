@@ -4,17 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>Prox Primo Pitchside</title>
+<title>PRIMO Pitchside</title>
 <style>
 :root{color-scheme:light dark;--bg:#ffffff;--ink:#101511;--mut:#5c665f;--line:#e3e8e4;--pitch:#0f6b3a;--pitchbg:#e8f4ec;--live:#e1261c;--chip:#f2f5f3}
-@media(prefers-color-scheme:dark){:root{--bg:#0c1310;--ink:#eef3ef;--mut:#9aa69e;--line:#1f2a24;--pitch:#3fbf75;--pitchbg:#12271b;--chip:#16201b}}
+@media(prefers-color-scheme:dark){:root{--bg:#0e1124;--ink:#f1f3fb;--mut:#9ca3c2;--line:#262b4d;--pitch:#3fbf75;--pitchbg:#14283a;--chip:#1a1e3a}}
 *{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,Roboto,sans-serif;overflow-x:hidden}
 .wrap{max-width:760px;margin:0 auto;padding:20px 16px 48px}
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .brand{font-weight:700;font-size:15px;color:var(--pitch);margin:0;display:flex;align-items:center;gap:10px}
-.brand img{width:36px;height:36px;border-radius:50%}
-body.tv .brand img{width:44px;height:44px}
+.brand img{width:40px;height:40px;border-radius:50%;background:#1d213c}
+.bw{display:flex;flex-direction:column;line-height:1}.bw b{font-size:22px;font-weight:900;letter-spacing:1.5px;color:var(--ink)}.bw i{font-style:normal;font-size:13px;font-weight:700;color:var(--pitch);margin-top:3px;letter-spacing:.3px}
+body.tv .bw b{font-size:30px}body.tv .bw i{font-size:17px}
+body.tv .brand img{width:54px;height:54px}
 .icons{display:flex;gap:6px}
 .ib{border:0;background:var(--chip);color:var(--ink);width:44px;height:44px;border-radius:12px;font-size:20px;cursor:pointer}
 header{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:12px 20px;margin-top:6px}
@@ -103,7 +105,7 @@ select{font:16px inherit;font-family:inherit;color:var(--ink);background:var(--c
 .teams{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 16px}
 .team{display:flex;align-items:center;gap:6px;background:var(--chip);border-radius:999px;padding:6px 6px 6px 12px;font-weight:600}
 .team button{border:0;background:none;color:var(--mut);font-size:18px;width:32px;height:32px}
-body.tv{--bg:#0c1310;--ink:#eef3ef;--mut:#9aa69e;--line:#1f2a24;--pitch:#3fbf75;--pitchbg:#12271b;--chip:#16201b;color-scheme:dark}
+body.tv{--bg:#0e1124;--ink:#f1f3fb;--mut:#9ca3c2;--line:#262b4d;--pitch:#3fbf75;--pitchbg:#14283a;--chip:#1a1e3a;color-scheme:dark}
 #list .ev{content-visibility:auto;contain-intrinsic-size:auto 110px}
 body.tv *{animation:none!important;transition:none!important}
 body.tv .sheet{background:rgba(0,0,0,.7)}
@@ -126,7 +128,7 @@ body.tv .hint{display:block}
 
 <!-- Sign-in screen -->
 <div class="login" id="loginView" hidden>
-  <p class="brand"><img src="logo.png" alt="">Prox Primo Pitchside</p>
+  <p class="brand"><img src="logo.png" alt=""><span class="bw"><b>PRIMO</b><i>Pitchside</i></span></p>
   <h1>Sign in</h1>
   <p>Sign in with your username and password. They're saved on this device only.</p>
   <form id="loginForm" autocomplete="on">
@@ -141,7 +143,7 @@ body.tv .hint{display:block}
 <div class="wrap" id="mainView" hidden>
   <div class="ptr" id="ptr">Release to refresh</div>
   <div class="top">
-    <p class="brand"><img src="logo.png" alt="">Prox Primo Pitchside</p>
+    <p class="brand"><img src="logo.png" alt=""><span class="bw"><b>PRIMO</b><i>Pitchside</i></span></p>
     <div class="icons">
       <button class="ib fav" id="favBtn" aria-label="Favourites">&#x2605;</button>
       <button class="ib" id="refresh" aria-label="Refresh listings">&#x21bb;</button>
@@ -768,7 +770,7 @@ $('#hideNo').addEventListener('click', () => { $('#hideSheet').hidden = true; })
 $('#hideSheet').addEventListener('click', e => { if (e.target.id === 'hideSheet') $('#hideSheet').hidden = true; });
 
 // ---------- Update alerts ----------
-// What people see: "1.0" from the app, and "Prox Primo Pitchside 1.1" from the release name.
+// What people see: "1.0" from the app, and "PRIMO Pitchside 1.1" from the release name.
 const myVersion = () => (window.Native && Native.versionName && Native.versionName()) || '';
 const relVersion = rel => (String(rel.name || '').match(/(\d+(?:\.\d+)+)/) || [])[1] || '';
 // Checks GitHub for a newer build each time the app opens, and from Settings.
@@ -787,13 +789,13 @@ async function checkUpdate(manual) {
     const newV = relVersion(rel), curV = myVersion();
     if (!n || !asset || n <= mine) { status(`✓ You have the latest version${curV ? ` (${curV})` : ''}. Checked ${hhmm(new Date())}.`); return; }
     if (manual) {
-      status(newV ? `Prox Primo Pitchside ${newV} is available. You have ${curV || 'an older version'}.` : 'A new version of Prox Primo Pitchside is available.');
+      status(newV ? `PRIMO Pitchside ${newV} is available. You have ${curV || 'an older version'}.` : 'A new version of PRIMO Pitchside is available.');
       $('#updDownload').hidden = false;
       $('#updDownload').onclick = () => Native.openUrl(asset.browser_download_url);
       setTimeout(() => $('#updDownload').focus(), 30);
     }
     if (!manual && n === store.get('skipBuild')) return;
-    $('#updateText').textContent = newV ? `Prox Primo Pitchside ${newV} is available.` : 'A new version of Prox Primo Pitchside is available.';
+    $('#updateText').textContent = newV ? `PRIMO Pitchside ${newV} is available.` : 'A new version of PRIMO Pitchside is available.';
     $('#updateGo').onclick = () => { Native.openUrl(asset.browser_download_url); $('#updateBar').hidden = true; };
     $('#updateX').onclick = () => { store.set('skipBuild', n); $('#updateBar').hidden = true; };
     $('#updateBar').hidden = false;
@@ -928,7 +930,7 @@ function renderSettings() {
   try { players = window.Native && Native.getPlayers ? JSON.parse(Native.getPlayers()) : []; } catch {}
   if (playerMode !== 'builtin' && playerMode !== 'ask' && !players.some(p => p.pkg === playerMode)) playerMode = 'builtin';
   const opts = [
-    { id: 'builtin', label: 'Prox Primo player', note: 'Built in, works everywhere' },
+    { id: 'builtin', label: 'PRIMO player', note: 'Built in, works everywhere' },
     { id: 'ask', label: 'Ask every time', note: 'Pick a player each time you watch' },
     ...players.map(p => ({ id: p.pkg, label: p.label, note: 'Installed on this device' })),
   ];
@@ -938,7 +940,7 @@ function renderSettings() {
   $('#hiddenList').innerHTML = hidden.length
     ? hidden.map((c, i) => `<span class="team">${esc(c)}<button data-i="${i}" aria-label="Show ${esc(c)} again">×</button></span>`).join('')
     : '<span style="color:var(--mut);font-size:14px">None</span>';
-  $('#verLine').textContent = myVersion() ? `Prox Primo Pitchside version ${myVersion()}` : 'Prox Primo Pitchside';
+  $('#verLine').textContent = myVersion() ? `PRIMO Pitchside version ${myVersion()}` : 'PRIMO Pitchside';
   const st = store.get('stats');
   $('#statsBox').textContent = st
     ? `${st.kept} sport listings (${st.live} live) from ${st.checked} channel guides${st.quick ? ' (quick refresh)' : ''}. ${st.programmes} programmes read${st.failed ? `, ${st.failed} channels didn't respond` : ''}.${st.noGuide != null ? ` ${st.noGuide} of ${st.sportStreams} sport channels have no guide.` : ''}`

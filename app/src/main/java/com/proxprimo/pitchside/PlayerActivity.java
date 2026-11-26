@@ -150,7 +150,7 @@ public class PlayerActivity extends AppCompatActivity {
         if (client == null) return;
         String url = urls[0];
         MediaMetadata meta = new MediaMetadata(MediaMetadata.MEDIA_TYPE_MOVIE);
-        meta.putString(MediaMetadata.KEY_TITLE, title == null ? "Prox Primo Pitchside" : title);
+        meta.putString(MediaMetadata.KEY_TITLE, title == null ? "PRIMO Pitchside" : title);
         boolean hls = url.contains(".m3u8");
         MediaInfo info = new MediaInfo.Builder(url)
                 .setStreamType(url.contains("timeshift") ? MediaInfo.STREAM_TYPE_BUFFERED : MediaInfo.STREAM_TYPE_LIVE)

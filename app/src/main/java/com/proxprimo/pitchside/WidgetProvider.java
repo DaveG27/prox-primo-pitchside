@@ -40,7 +40,7 @@ public class WidgetProvider extends AppWidgetProvider {
 
     private static String buildBody(Context c) {
         String raw = c.getSharedPreferences("widget", Context.MODE_PRIVATE).getString("games", "");
-        if (raw.isEmpty()) return "Open Prox Primo Pitchside to load listings";
+        if (raw.isEmpty()) return "Open PRIMO Pitchside to load listings";
         SimpleDateFormat fmt = new SimpleDateFormat("HH:mm", Locale.UK);
         fmt.setTimeZone(TimeZone.getTimeZone("Europe/London"));
         long now = System.currentTimeMillis();

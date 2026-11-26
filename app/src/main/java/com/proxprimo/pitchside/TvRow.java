@@ -22,7 +22,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 /**
- * Android TV / Google TV home screen: a "Prox Primo Pitchside" row listing the next live games.
+ * Android TV / Google TV home screen: a "PRIMO Pitchside" row listing the next live games.
  * Fire TV doesn't support these rows, so this quietly does nothing there.
  */
 final class TvRow {
@@ -40,7 +40,7 @@ final class TvRow {
             if (channelId == -1 || helper.getPreviewChannel(channelId) == null) {
                 Bitmap logo = BitmapFactory.decodeResource(c.getResources(), R.drawable.tv_logo);
                 PreviewChannel channel = new PreviewChannel.Builder()
-                        .setDisplayName("Prox Primo · live sport")
+                        .setDisplayName("PRIMO · live sport")
                         .setAppLinkIntentUri(open)
                         .setLogo(logo)
                         .build();
