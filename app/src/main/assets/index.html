@@ -254,7 +254,17 @@ const IS_TV_BOX = !!(window.Native && Native.isTv && Native.isTv());
 const MAX_CHANNELS = IS_TV_BOX ? 300 : 450;
 const DAYS = 7;          // days shown in the day picker
 const GROUPS_KEY = 'groups3';
-const UPDATE_API = 'https://api.github.com/repos/DaveG27/prox-primo-pitchside/releases/latest';
+const UPDATE_CONTROL = 'https://primo-updates.vercel.app/pitchside.json';   // says where updates live, so they can move off GitHub without a reinstall
+const UPDATE_REPO = 'DaveG27/prox-primo-pitchside';
+async function latestRelease() {
+  let ctl = null;
+  try { ctl = await getJson(UPDATE_CONTROL); } catch {}
+  if (ctl && +ctl.build > 0 && /^https:\/\//.test(ctl.apk || '')) return { n: +ctl.build, url: ctl.apk, v: String(ctl.version || '') };
+  const repo = ctl && /^[\w.-]+\/[\w.-]+$/.test(ctl.github || '') ? ctl.github : UPDATE_REPO;
+  const rel = await getJson(`https://api.github.com/repos/${repo}/releases/latest`);
+  const apk = (rel.assets || []).find(a => /\.apk$/i.test(a.name));
+  return { n: parseInt(String(rel.tag_name || '').replace(/\D+/g, ''), 10), url: apk && apk.browser_download_url, v: relVersion(rel) };
+}
 
 // ---------- Native bridge (falls back to fetch when opened in a browser for testing) ----------
 const pending = {};
@@ -785,24 +795,23 @@ async function checkUpdate(manual) {
   updateCheckedThisRun = true;
   if (manual) { $('#updDownload').hidden = true; status('Checking for updates…'); }
   try {
-    const rel = await getJson(UPDATE_API);
-    const n = parseInt(String(rel.tag_name || '').replace(/\D+/g, ''), 10);
-    const asset = (rel.assets || []).find(a => /\.apk$/i.test(a.name));
+    const rel = await latestRelease();
+    const n = rel.n, apkUrl = rel.url;
     const mine = Native.buildNumber();
-    const newV = relVersion(rel), curV = myVersion();
-    if (!n || !asset || n <= mine) { status(`✓ You have the latest version${curV ? ` (${curV})` : ''}. Checked ${hhmm(new Date())}.`); return; }
+    const newV = rel.v, curV = myVersion();
+    if (!n || !apkUrl || n <= mine) { status(`✓ You have the latest version${curV ? ` (${curV})` : ''}. Checked ${hhmm(new Date())}.`); return; }
     if (manual) {
       status(newV ? `PRIMO Pitchside ${newV} is available. You have ${curV || 'an older version'}.` : 'A new version of PRIMO Pitchside is available.');
       $('#updDownload').hidden = false;
-      $('#updDownload').onclick = () => Native.openUrl(asset.browser_download_url);
+      $('#updDownload').onclick = () => Native.openUrl(apkUrl);
       setTimeout(() => $('#updDownload').focus(), 30);
     }
     if (!manual && n === store.get('skipBuild')) return;
     $('#updateText').textContent = newV ? `PRIMO Pitchside ${newV} is available.` : 'A new version of PRIMO Pitchside is available.';
-    $('#updateGo').onclick = () => { Native.openUrl(asset.browser_download_url); $('#updateBar').hidden = true; };
+    $('#updateGo').onclick = () => { Native.openUrl(apkUrl); $('#updateBar').hidden = true; };
     $('#updateX').onclick = () => { store.set('skipBuild', n); $('#updateBar').hidden = true; };
     $('#updateBar').hidden = false;
-  } catch (err) { status(`Couldn't reach GitHub to check (${err && err.status ? 'error ' + err.status : 'no connection'}). Try again shortly.`); }
+  } catch (err) { status(`Couldn't check for updates (${err && err.status ? 'error ' + err.status : 'no connection'}). Try again shortly.`); }
 }
 
 // ---------- TV remote ----------
