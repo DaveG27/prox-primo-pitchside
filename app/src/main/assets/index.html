@@ -121,6 +121,7 @@ body.tv :focus{outline:4px solid var(--pitch)!important;outline-offset:3px}
 body.tv .ev:focus{outline:none!important}
 body.tv .bell,body.tv .watch,body.tv .catch{pointer-events:none}
 body.tv .hint{display:block}
+.sizes{display:flex;gap:8px;flex-wrap:wrap}.sizes .opt{width:auto;flex:1;justify-content:center;margin:0;padding:8px 10px;min-height:48px}.sizes .opt[aria-pressed=true]{border-color:var(--pitch);background:var(--pitchbg)}
 .hint{display:none;color:var(--mut);font-size:15px;margin:10px 0 0}
 </style>
 </head>
@@ -182,6 +183,8 @@ body.tv .hint{display:block}
     <h2 id="setTitle">Settings</h2>
     <p>Open games in:</p>
     <div id="playerList"></div>
+    <p style="margin-top:14px">Text size:</p>
+    <div class="sizes" id="sizeList"></div>
     <p style="margin-top:14px">Open the app on:</p>
     <select id="startSel" aria-label="Start screen"></select>
     <p style="margin-top:14px">Hidden channels <span style="font-size:13px">(tap a channel name on any game to hide it)</span></p>
@@ -924,6 +927,10 @@ document.addEventListener('keydown', e => {
   }
 });
 
+// ---------- Text size ----------
+const SIZES = [['90', 'Small', 14], ['100', 'Normal', 16], ['115', 'Large', 18], ['130', 'Extra large', 20]];
+function applySize() { const z = store.get('textSize') || '100'; document.documentElement.style.zoom = z === '100' ? '' : (+z / 100); }
+applySize();
 // ---------- Settings ----------
 function renderSettings() {
   let players = [];
@@ -935,6 +942,8 @@ function renderSettings() {
     ...players.map(p => ({ id: p.pkg, label: p.label, note: 'Installed on this device' })),
   ];
   $('#playerList').innerHTML = opts.map(o => `<button class="opt" data-mode="${esc(o.id)}" aria-pressed="${o.id === playerMode}"><span>${esc(o.label)}<small>${esc(o.note)}</small></span></button>`).join('');
+  const curSize = store.get('textSize') || '100';
+  $('#sizeList').innerHTML = SIZES.map(([v, l, px]) => `<button class="opt" data-size="${v}" aria-pressed="${v === curSize}"><span style="font-size:${px}px">${l}</span></button>`).join('');
   const startOpts = [['last', 'Where I left off'], ['all', 'All sport'], ...(favs.length ? [['fav', '★ Favourites']] : []), ...SPORTS.slice(1).map(x => [x.id, x.name])];
   $('#startSel').innerHTML = startOpts.map(([v, l]) => `<option value="${v}"${v === (store.get('startView') || 'last') ? ' selected' : ''}>${esc(l)}</option>`).join('');
   $('#hiddenList').innerHTML = hidden.length
@@ -950,6 +959,11 @@ $('#settingsBtn').addEventListener('click', () => { renderSettings(); $('#setShe
 $('#playerList').addEventListener('click', e => {
   const o = e.target.closest('.opt'); if (!o) return;
   playerMode = o.dataset.mode; store.set('playerMode', playerMode); renderSettings();
+});
+$('#sizeList').addEventListener('click', e => {
+  const b = e.target.closest('[data-size]'); if (!b) return;
+  store.set('textSize', b.dataset.size); applySize(); renderSettings();
+  const f = $(`#sizeList [data-size="${b.dataset.size}"]`); if (f) f.focus();
 });
 $('#setClose').addEventListener('click', () => { $('#setSheet').hidden = true; });
 $('#checkUpd').addEventListener('click', () => checkUpdate(true));
