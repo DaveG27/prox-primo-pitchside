@@ -410,6 +410,10 @@ async function loadChannels(base) {
     const g = groups.get(key) || { id: st.stream_id, raw: name, names: [], intl: INTL.test(name) || (/\b(usa?|aus?|nz|ca|ar|br|mx|es|fr|de|it|pt|nl|pl|tr|ar|in|za)\b\s*[:|]/i.test(cat) && !/\b(uk|gb|ie)\b/i.test(cat)), uk: /\b(uk|gb|ie|irl)\b/i.test(name + ' ' + cat) };
     const clean = cleanChannel(name);
     if (!g.names.includes(clean)) g.names.push(clean);
+    // Quality copies (FHD / HD / SD...) of the channel share its guide, so keep each one.
+    const q = qualOf(name);
+    g.vars = g.vars || [];
+    if (!g.vars.some(v => v.q === q)) g.vars.push({ id: st.stream_id, q });
     if (!g.arch && String(st.tv_archive) === '1') g.arch = { id: st.stream_id, days: Number(st.tv_archive_duration) || 2 };
     groups.set(key, g);
   }
@@ -450,11 +454,11 @@ async function scan(base, list, onProgress, stats0, found) {
         const hit = byKey.get(key);
         if (hit) {
           for (const n of g.names) if (!hit.channels.includes(n)) hit.channels.push(n);
-          if (!hit.streams.some(x => x.id === g.id)) hit.streams.push({ n: g.names[0], id: g.id, a: g.arch ? g.arch.days : 0, aid: g.arch ? g.arch.id : 0 });
+          if (!hit.streams.some(x => x.id === g.id)) hit.streams.push({ n: g.names[0], id: g.id, a: g.arch ? g.arch.days : 0, aid: g.arch ? g.arch.id : 0, v: sortVars(g.vars) });
           hit.live = hit.live || f.live; hit.intl = hit.intl && g.intl;
         } else {
           byKey.set(key, { s: start.getTime(), e: isNaN(end) ? start.getTime() + 2 * 3600e3 : end.getTime(),
-            sport, title: f.title, comp: f.comp, live: f.live, intl: g.intl, channels: [...g.names], streams: [{ n: g.names[0], id: g.id, a: g.arch ? g.arch.days : 0, aid: g.arch ? g.arch.id : 0 }] });
+            sport, title: f.title, comp: f.comp, live: f.live, intl: g.intl, channels: [...g.names], streams: [{ n: g.names[0], id: g.id, a: g.arch ? g.arch.days : 0, aid: g.arch ? g.arch.id : 0, v: sortVars(g.vars) }] });
         }
       }
     }
@@ -694,20 +698,42 @@ function streamUrls(id) {
   const b = `${SERVER}/live/${encodeURIComponent(login.u)}/${encodeURIComponent(login.p)}/${id}`;
   return [`${b}.m3u8`, `${b}.ts`];
 }
-function play(stream, title) {
-  const urls = streamUrls(stream.id);
+// ---------- Quality copies of a channel ----------
+function qualOf(n) {
+  const u = String(n || '').toUpperCase();
+  if (/\b(4K|UHD|2160P?)\b|ᵁᴴᴰ/.test(u)) return '4K';
+  if (/\b(FHD|1080P?)\b|ᶠᴴᴰ/.test(u)) return 'FHD';
+  if (/\b(HD|720P?)\b|ᴴᴰ/.test(u)) return 'HD';
+  if (/\bSD\b|ˢᴰ/.test(u)) return 'SD';
+  return '';
+}
+const QORDER = ['FHD', 'HD', 'SD', '4K', ''];
+function sortVars(v) { return (v || []).slice().sort((a, b) => QORDER.indexOf(a.q) - QORDER.indexOf(b.q)); }
+// Every way to watch a game: each channel, in each quality it comes in.
+function watchOptions(ev) {
+  const out = [];
+  for (const st of ev.streams || []) {
+    const vars = (st.v && st.v.length > 1) ? st.v : [{ id: st.id, q: (st.v && st.v[0] && st.v[0].q) || '' }];
+    for (const v of vars) out.push({ st, id: v.id, q: v.q, label: `${st.n}${v.q ? ' · ' + v.q : ''}` });
+  }
+  return out;
+}
+
+function play(stream, title, idOverride, q) {
+  const urls = streamUrls(idOverride || stream.id);
   if (!urls.length) return;
-  if (window.Native && Native.play) Native.play(JSON.stringify(urls), `${title} · ${stream.n}`, playerMode, USER_AGENT);
+  if (window.Native && Native.play) Native.play(JSON.stringify(urls), `${title} · ${stream.n}${q ? ' ' + q : ''}`, playerMode, USER_AGENT);
   else toast('Watching works in the Android app');
 }
 $('#list').addEventListener('click', e => {
   const b = e.target.closest('.watch'); if (!b) return;
   const ev = events.find(x => evId(x) === b.dataset.id);
   if (!ev || !(ev.streams || []).length) return;
-  if (ev.streams.length === 1) return play(ev.streams[0], ev.title);
+  const opts = watchOptions(ev);
+  if (opts.length === 1) return play(opts[0].st, ev.title, opts[0].id, opts[0].q);
   $('#chGame').textContent = ev.title;
-  $('#chList').innerHTML = ev.streams.map((st, i) => `<button class="opt" data-i="${i}">${esc(st.n)}</button>`).join('');
-  $('#chList').onclick = x => { const o = x.target.closest('.opt'); if (!o) return; $('#chSheet').hidden = true; play(ev.streams[+o.dataset.i], ev.title); };
+  $('#chList').innerHTML = opts.map((o, i) => `<button class="opt" data-i="${i}">▶ ${esc(o.label)}</button>`).join('');
+  $('#chList').onclick = x => { const o = x.target.closest('.opt'); if (!o) return; $('#chSheet').hidden = true; const w = opts[+o.dataset.i]; play(w.st, ev.title, w.id, w.q); };
   $('#chSheet').hidden = false;
   setTimeout(() => { const f = $('#chList .opt'); if (f) f.focus(); }, 50);
 });
@@ -867,7 +893,7 @@ function openActions(ev) {
   actRow = evId(ev);
   const now = Date.now(), done = over(ev) <= now, id = evId(ev);
   const acts = [];
-  if (!done) for (const st of ev.streams || []) acts.push([`▶ Watch on ${st.n}`, () => play(st, ev.title)]);
+  if (!done) for (const w of watchOptions(ev)) acts.push([`▶ Watch on ${w.label}`, () => play(w.st, ev.title, w.id, w.q)]);
   if (!done && canCatchUp(ev, now)) for (const st of ev.streams.filter(x => x.a > 0)) acts.push([`⏮ From start on ${st.n}`, () => playCatchUp(st, ev)]);
   if (ev.s > now + 15 * 60e3) acts.push(reminders[id] ? ['🔕 Cancel reminder', () => { removeReminder(id); toast('Reminder cancelled'); }]
                                                     : ['🔔 Remind me 15 minutes before', () => { addReminder(ev); toast('Reminder set'); }]);
